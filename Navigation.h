@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include <AccelStepper.h>
+#include "constants.h"
 
 typedef enum{
 	SENS_UNDEFINED,
@@ -22,6 +23,8 @@ class Navigation
     int go_c(float x, float y, float t);
     int is_finished();
 
+    void setOdom(float x, float y, float t);
+
     int straight(float dist);
     int turn(float angle);
 
@@ -37,16 +40,25 @@ class Navigation
 
     sens_t getSens(){ return m_sens; }
 
+    void setColor(color_t c){m_color = c;}
+    float symX(float x);
+    float symT(float t);
+    float moduloPiPi(float a);
+
+    float getX(){return m_x;}
+    float getX_uncolored() {return symX(m_x);}
+    float getY(){return m_y;}
+    float getT(){return m_t;}
 
   private:
-    double m_x;
-    double m_y;
-    double m_t;
+    float m_x;
+    float m_y;
+    float m_t;
     int m_inProgress;
     AccelStepper* stepperG;
     AccelStepper* stepperD;
     sens_t m_sens;
-
+    color_t m_color;
 
 };
 

@@ -1,3 +1,8 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+#define ENABLE_DETECTION 1
+
 #define GAIN_ANALOG_TENSION_BATTERIE 0.024
 #define ANTIREBOND_MS 200
 #define DELAY_START_MS 1000
@@ -5,10 +10,28 @@
 #define GAIN_STEP_MM 16.818 // OK
 //#define GAIN_STEP_DEG 2000.0/218.0*1.75
 
-#define V_MAX 80000
+#define V_MAX 30000 //80000
 #define ACC_MAX 20000
+
+// CLAWS
+#define CLAW_LEFT_CLOSED 80
+#define CLAW_LEFT_OPENED 90
+#define CLAW_RIGHT_CLOSED 90
+#define CLAW_RIGHT_OPENED 80
 
 // DIMENSIONS
 #define VOIE 104.73
+#define X_AR 34.0
+#define Y_GAUCHE 60.0
 
 #define OSCILATOR 50 //ms
+
+typedef enum{
+	COLOR_UNDEF,
+	GRN,
+	PRP
+} color_t;
+
+
+#define MARCHE_AR -1
+#endif

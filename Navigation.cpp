@@ -12,6 +12,7 @@ Navigation::Navigation(AccelStepper* sG, AccelStepper* sD)
 	m_inProgress = 0;
 	stepperG = sG;
 	stepperD = sD;
+	m_color = PRP;
 }
 
 /**
@@ -27,15 +28,7 @@ Navigation::go_s(float x, float y, int sens) {
 	static int state = 0;
 	static int prev_state = -1;
 
-	if (prev_state != state)
-	{
-		Serial.print("Navigation::go_s state");
-		Serial.print(prev_state);
-		Serial.print(" -> ");
-		Serial.println(state);
-		Serial.print("odom: ");Serial.print(m_x);Serial.print(",");Serial.print(m_y);Serial.print(",");Serial.println(m_t);
-		prev_state = state;
-	}
+	x = symX(x);
 
 	switch (state)
 	{
@@ -44,14 +37,8 @@ Navigation::go_s(float x, float y, int sens) {
 		break;
 	case 1: // compute first turn
 		alpha = atan2(y-m_y, x-m_x);
-		alpha *= sens;
-		Serial.print("alpha = "); Serial.println(alpha);
-		if (alpha-m_t < M_PI)
-			angle = alpha - m_t + 2* M_PI;
-		else if (alpha-m_t > M_PI)
-			angle = alpha - m_t - 2* M_PI;
-		else
-			angle = alpha-m_t;
+		if (sens == -1) alpha += M_PI;
+		angle = moduloPiPi(alpha-m_t);
 		startTraj();
 		state = 2;
 		break;
@@ -63,7 +50,6 @@ Navigation::go_s(float x, float y, int sens) {
 		break;
 	case 3:
 		delta = sens*sqrt((x-m_x)*(x-m_x)+(y-m_y)*(y-m_y));
-		Serial.print("delta = "); Serial.println(delta);
 		startTraj();
 		state = 4;
 		break;
@@ -74,6 +60,20 @@ Navigation::go_s(float x, float y, int sens) {
 		}
 		break;
 	default:;
+	}
+
+	if (prev_state != state)
+	{
+		Serial.print("Navigation::go_s state");
+		Serial.print(prev_state);
+		Serial.print(" -> ");
+		Serial.println(state);
+		Serial.print("odom: ");Serial.print(m_x);Serial.print(",");Serial.print(m_y);Serial.print(",");Serial.println(m_t);
+		prev_state = state;
+		Serial.print("I AM IN ");
+		Serial.print(x);
+		Serial.print(",");
+		Serial.println(y);
 	}
 
 	if (state == 0)
@@ -103,11 +103,11 @@ Navigation::go_s(float x, float y, float t, int sens) {
 		state = 1;
 		break;
 	case 1:
-		if (go_s(x,y))
+		if (go_s(x,y,sens))
 			state = 2;
 		break;
 	case 2:
-		if ( t - m_t < M_PI)
+		if ( t - m_t < -M_PI)
 			angle =  t - m_t + 2* M_PI;
 		else if ( t - m_t > M_PI)
 			angle =  t - m_t - 2* M_PI;
@@ -123,6 +123,13 @@ Navigation::go_s(float x, float y, float t, int sens) {
 	}
 
 	return (state == 0);
+}
+
+void
+Navigation::setOdom(float x, float y, float t){
+	m_x = symX(x);
+	m_y = y;
+	m_t = moduloPiPi(symT(t));
 }
 
 int
@@ -155,6 +162,10 @@ Navigation::straight(float mm)
 int
 Navigation::turn(float angle)
 {
+	stepperG->setMaxSpeed(V_MAX);
+	stepperD->setMaxSpeed(V_MAX);
+	stepperG->setAcceleration(ACC_MAX);
+	stepperD->setAcceleration(ACC_MAX);
 	stepperG->moveTo(angle * VOIE/2 * GAIN_STEP_MM);
 	stepperD->moveTo(angle * VOIE/2 * GAIN_STEP_MM);
 
@@ -162,6 +173,7 @@ Navigation::turn(float angle)
 	{
 		// Update odom
 		m_t += angle;
+		m_t = moduloPiPi(m_t);
 		return true;
 	}
 	else
@@ -216,4 +228,31 @@ Navigation::startTraj()
 {
 	stepperG->setCurrentPosition(0);
 	stepperD->setCurrentPosition(0);
+}
+
+float
+Navigation::symX(float x){
+	if (m_color == GRN)
+		return -x;
+	else
+		return x;
+}
+
+float
+Navigation::symT(float t){
+	if (m_color == GRN)
+		return -t + M_PI;
+	else
+		return t;
+}
+
+
+float
+Navigation::moduloPiPi(float a){
+	if (a <= -M_PI)
+		return a + 2*M_PI;
+	else if (a > M_PI)
+		return a - 2*M_PI;
+	else
+		return a;
 }
