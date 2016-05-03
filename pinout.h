@@ -13,7 +13,7 @@
 #define BUTTON_COLOR    23
 #define BUTTON_STRAT1   24
 #define BUTTON_STRAT2   25
-//#define OMRON1           25  //@todo a revoir suite à soudure de la carte
+#define OMRON1          31
 #define OMRON2          26
 #define OMRON3          27
 #define OMRON4          28

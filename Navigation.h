@@ -6,6 +6,12 @@
 #include "Arduino.h"
 #include <AccelStepper.h>
 
+typedef enum{
+	SENS_UNDEFINED,
+	SENS_AV,
+	SENS_AR
+} sens_t;
+
 class Navigation
 {
   public:
@@ -25,8 +31,11 @@ class Navigation
     void compute_odom(float dxG,float dxD);
 
     void motorRun();
+    void run();
     int isArrived();
     void startTraj();
+
+    sens_t getSens(){ return m_sens; }
 
 
   private:
@@ -36,6 +45,7 @@ class Navigation
     int m_inProgress;
     AccelStepper* stepperG;
     AccelStepper* stepperD;
+    sens_t m_sens;
 
 
 };

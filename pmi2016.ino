@@ -7,6 +7,7 @@
 #include <AccelStepper.h>
 #include "Navigation.h"
 #include "RGB.h"
+#include "Detection.h"
 
 
 Servo srv_bras;
@@ -20,6 +21,7 @@ RGB rgb = RGB(LED_RGB_R,LED_RGB_G,LED_RGB_B);
 AccelStepper *stepperG = new AccelStepper(AccelStepper::DRIVER, PAPG_STEP, PAPG_DIR);
 AccelStepper *stepperD = new AccelStepper(AccelStepper::DRIVER, PAPD_STEP, PAPD_DIR);
 Navigation nav = Navigation(stepperG,stepperD);
+Detection detection = Detection(OMRON1, OMRON2, OMRON3, OMRON4);
 
 typedef enum{
 	BEGIN,
@@ -48,6 +50,10 @@ void setup() {
 	pinMode(LED4, OUTPUT);
 	pinMode(PAP_ENABLE, OUTPUT);
 	pinMode(BUZZER, OUTPUT);
+	pinMode(OMRON1, INPUT_PULLUP);
+	pinMode(OMRON2, INPUT_PULLUP);
+	pinMode(OMRON3, INPUT_PULLUP);
+	pinMode(OMRON4, INPUT_PULLUP);
 	digitalWrite(LED1 , LOW);
 	digitalWrite(LED2 , LOW);
 	digitalWrite(LED3 , LOW);
@@ -71,7 +77,7 @@ void setup() {
 	delay(300);
 	rgb.off();
 
-	Scheduler.startLoop(loop2);
+	//Scheduler.startLoop(loop2);
 	Scheduler.startLoop(loop3);
 
 	Serial.begin(115200);
@@ -84,61 +90,10 @@ void setup() {
 
 void loop() {
 
-	if (btn_start.newState() && btn_start.getCurrentState() == 1)
-	{
-		Serial.println("START");
-		started = true;
-	}
+	square();
 
+	test_inputs();
 
-	if (started)
-	{
-		digitalWrite(PAP_ENABLE, LOW);
-		switch (state1)
-		{
-		case BEGIN:
-			state1 = LIGNE1;
-			break;
-		case LIGNE1:
-			rgb.set(YELLOW,FAST);
-			if(nav.go_s(500,0))
-			{
-				Serial.println("LIGNE1 -> LIGNE2");
-				state1 = LIGNE2;
-			}
-			break;
-		case LIGNE2:
-			rgb.set(PURPLE,FAST);
-			if(nav.go_s(500,500))
-			{
-				Serial.println("LIGNE2 -> LIGNE3");
-				state1 = LIGNE3;
-			}
-			break;
-		case LIGNE3:
-			rgb.set(CYAN,FAST);
-			if(nav.go_s(0,500))
-			{
-				Serial.println("LIGNE3 -> LIGNE4");
-				state1 = LIGNE4;
-			}
-			break;
-		case LIGNE4:
-			rgb.set(GREEN,FAST);
-			if(nav.go_s(0,0))
-			{
-				Serial.println("LIGNE4 -> BEGIN");
-				state1 = BEGIN;
-				started = false;
-			}
-			break;
-		default:;
-		}
-	}
-	else
-	{
-		digitalWrite(PAP_ENABLE, HIGH);
-	}
 
 //	if (started)
 //	{
@@ -263,7 +218,78 @@ void loop3()
 	//  motorRun();
 //	static int i;
 //	digitalWrite(LED_RGB_R,i++%2);
-	nav.motorRun();
+	detection.run();
+	nav.run();
+	if (!detection.getDetectionFront())
+	{
+		nav.motorRun();
+	}
 	rgb.run();
+
 	yield();
+}
+
+void square(){
+	if (btn_start.newState() && btn_start.getCurrentState() == 0)
+	{
+		Serial.println("START");
+		started = true;
+	}
+
+
+	if (started)
+	{
+		digitalWrite(PAP_ENABLE, LOW);
+		switch (state1)
+		{
+		case BEGIN:
+			state1 = LIGNE1;
+			break;
+		case LIGNE1:
+			rgb.set(YELLOW,FAST);
+			if(nav.go_s(500,0))
+			{
+				Serial.println("LIGNE1 -> LIGNE2");
+				state1 = LIGNE2;
+			}
+			break;
+		case LIGNE2:
+			rgb.set(PURPLE,FAST);
+			if(nav.go_s(500,500))
+			{
+				Serial.println("LIGNE2 -> LIGNE3");
+				state1 = LIGNE3;
+			}
+			break;
+		case LIGNE3:
+			rgb.set(CYAN,FAST);
+			if(nav.go_s(0,500))
+			{
+				Serial.println("LIGNE3 -> LIGNE4");
+				state1 = LIGNE4;
+			}
+			break;
+		case LIGNE4:
+			rgb.set(GREEN,FAST);
+			if(nav.go_s(0,0))
+			{
+				Serial.println("LIGNE4 -> BEGIN");
+				state1 = BEGIN;
+				started = false;
+			}
+			break;
+		default:;
+		}
+	}
+	else
+	{
+		digitalWrite(PAP_ENABLE, HIGH);
+	}
+}
+
+void test_inputs(){
+	digitalWrite(LED1 , digitalRead(OMRON1));
+	digitalWrite(LED2 , digitalRead(OMRON2));
+	digitalWrite(LED3 , digitalRead(OMRON3));
+	digitalWrite(LED4 , digitalRead(OMRON4));
 }

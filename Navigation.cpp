@@ -135,6 +135,12 @@ Navigation::straight(float mm)
 	stepperG->moveTo(-mm * GAIN_STEP_MM);
 	stepperD->moveTo(mm * GAIN_STEP_MM);
 
+	if (mm > 0)
+		m_sens = SENS_AV;
+	else
+		m_sens = SENS_AR;
+
+
 	if (isArrived())
 	{
 		// Update odom
@@ -167,7 +173,13 @@ Navigation::motorRun()
 {
 	stepperG->run();
 	stepperD->run();
+
 	//@todo compute_odom
+}
+
+void
+Navigation::run()
+{
 }
 
 
