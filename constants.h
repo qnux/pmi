@@ -2,13 +2,13 @@
 #define ANTIREBOND_MS 200
 #define DELAY_START_MS 1000
 
-#define GAIN_STEP_MM 17.255
+#define GAIN_STEP_MM 16.818 // OK
 //#define GAIN_STEP_DEG 2000.0/218.0*1.75
 
 #define V_MAX 80000
 #define ACC_MAX 20000
 
 // DIMENSIONS
-#define VOIE 100
+#define VOIE 104.73
 
 #define OSCILATOR 50 //ms
