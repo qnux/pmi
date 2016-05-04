@@ -34,7 +34,6 @@ class Navigation
     void compute_odom(float dxG,float dxD);
 
     void motorRun();
-    void run();
     int isArrived();
     void startTraj();
 

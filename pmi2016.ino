@@ -9,10 +9,15 @@
 #include "RGB.h"
 #include "Detection.h"
 #include <math.h>
+#include "Claws.h"
+//#include "DueTimer.h"
 
 
 Servo srv_bras;
-//Servo servoDroite;  // create servo object to control a servo
+Servo srv_umbrella;
+
+Servo * srv_claw_left = new Servo();
+Servo * srv_claw_right = new Servo();
 
 Button btn_start = Button(BUTTON_START);
 Button *btn_color;
@@ -23,6 +28,7 @@ AccelStepper *stepperG = new AccelStepper(AccelStepper::DRIVER, PAPG_STEP, PAPG_
 AccelStepper *stepperD = new AccelStepper(AccelStepper::DRIVER, PAPD_STEP, PAPD_DIR);
 Navigation nav = Navigation(stepperG,stepperD);
 Detection detection = Detection(OMRON1, OMRON2, OMRON3, OMRON4);
+Claws claws = Claws(srv_claw_left,srv_claw_right);
 
 color_t color = COLOR_UNDEF;
 
@@ -39,6 +45,7 @@ typedef enum{
 	HO_BEGIN,
 	HO_RECALAGE_START,
 	HO_LIGNE1,
+	HO_SNEAK_WALL,
 	HO_ACCOSTAGE_START_CABIN,
 	HO_LIGNE2,
 	HO_VIRAGE2,
@@ -56,9 +63,12 @@ strat1 state1 = BEGIN;
 state_homol_t state_homol = HO_BEGIN;
 
 int started = 0;
+int ended = 0;
+int die_motherfucker = 0;
+unsigned long dateStart = 0;
 
 void setup() {
-
+	//	Timer6.attachInterrupt(motors).start(200);
 	pinMode(BUTTON_START, INPUT);
 	pinMode(BUTTON_COLOR, INPUT);
 	btn_color = new Button(BUTTON_COLOR);
@@ -81,7 +91,12 @@ void setup() {
 	digitalWrite(LED2 , LOW);
 	digitalWrite(LED3 , LOW);
 	digitalWrite(LED4 , LOW);
-	srv_bras.attach(SERVO1);
+	srv_bras.attach(SERVO6);
+	srv_umbrella.attach(SERVO8);
+	srv_umbrella.write(UMBRELLA_ARMED);
+
+	srv_claw_left->attach(SERVO1);
+	srv_claw_right->attach(SERVO5);
 
 	stepperG->setMaxSpeed(V_MAX);
 	stepperD->setMaxSpeed(V_MAX);
@@ -100,7 +115,7 @@ void setup() {
 	}
 	rgb.off();rgb.run();
 
-	//Scheduler.startLoop(loop2);
+	Scheduler.startLoop(loop2);
 	Scheduler.startLoop(loop3);
 
 	Serial.begin(115200);
@@ -113,6 +128,28 @@ void setup() {
 
 void loop() {
 
+	if (die_motherfucker)
+	{
+		yield();
+		return;
+	}
+
+	if (btn_strat2.getRawState())
+	{
+		rgb.set(YELLOW,FAST);
+		test_claws();
+		test_umbrella();
+		yield();
+		return;
+	}
+
+	if (ended)
+	{
+		funny_action();
+		yield();
+		return;
+	}
+
 	if (!started)
 	{
 		wait_start();
@@ -120,49 +157,45 @@ void loop() {
 	}
 	else
 	{
-		strat_homol();
+		if (started && millis() - dateStart < DURATION_MATCH_MS)
+		{
+			strat_homol();
+			test_inputs();
+		}
+		else
+		{
+			digitalWrite(PAP_ENABLE, HIGH);
+			ended = true;
+			rgb.set(CYAN,FAST);
+		}
 		//		square();
-		test_inputs();
-//		etalon();
+		//		etalon();
 	}
+
+	//	test_buttons();
 
 	yield();
 }
 
 void loop2()
+//void motors()
 {
-	digitalWrite(LED1 , HIGH);
-	delay(100);
-	digitalWrite(LED2 , HIGH);
-	delay(100);
-	digitalWrite(LED3 , HIGH);
-	delay(100);
-	digitalWrite(LED4 , HIGH);
-	delay(100);
-	digitalWrite(LED1 , LOW);
-	delay(100);
-	digitalWrite(LED2 , LOW);
-	delay(100);
-	digitalWrite(LED3 , LOW);
-	delay(100);
-	digitalWrite(LED4 , LOW);
-	delay(100);
+	if (started)
+	{
+		if (!detection.getDetectionFront() && !detection.getDetectionRear())
+		{
+			nav.motorRun();
+		}
+	}
+	yield();
 }
 
 // Appel de tous les runs
 void loop3()
 {
-	//  motorRun();
-//	static int i;
-//	digitalWrite(LED_RGB_R,i++%2);
+	claws.run();
 	detection.run();
-	nav.run();
-	if (!detection.getDetectionFront() && !detection.getDetectionRear())
-	{
-		nav.motorRun();
-	}
 	rgb.run();
-
 	yield();
 }
 
@@ -227,6 +260,41 @@ void test_inputs(){
 	digitalWrite(LED4 , digitalRead(OMRON4));
 }
 
+void test_claws(){
+	if (btn_strat1.newState())
+	{
+		if (btn_strat1.getCurrentState())
+		{
+			claws.open();
+		}
+		else
+		{
+			claws.close();
+		}
+	}
+}
+
+void test_umbrella(){
+	if (btn_strat1.newState())
+	{
+		if (btn_strat1.getCurrentState())
+		{
+			srv_umbrella.write(UMBRELLA_RELEASED);
+		}
+		else
+		{
+			srv_umbrella.write(UMBRELLA_ARMED);
+		}
+	}
+}
+
+void test_buttons(){
+	digitalWrite(LED1 , digitalRead(BUTTON_START));
+	digitalWrite(LED2 , digitalRead(BUTTON_COLOR));
+	digitalWrite(LED3 , digitalRead(BUTTON_STRAT1));
+	digitalWrite(LED4 , digitalRead(BUTTON_STRAT2));
+}
+
 void etalon()
 {
 	digitalWrite(PAP_ENABLE, LOW);
@@ -246,6 +314,8 @@ void etalon()
 void wait_start()
 {
 	static bool armed = false;
+
+	detection.disableAll();
 
 	if (btn_color->newState())
 	{
@@ -283,6 +353,7 @@ void wait_start()
 	if (armed && btn_start.newState() && btn_start.getCurrentState() == 0)
 	{
 		started = true;
+		dateStart = millis();
 		if (color == GRN)
 			rgb.set(GREEN,FAST);
 		else if (color == PRP)
@@ -294,6 +365,13 @@ void wait_start()
 		// Initialize all components with the good color
 		nav.setColor(color);
 	}
+}
+
+void funny_action(){
+	srv_umbrella.write(UMBRELLA_RELEASED);
+	delay(5000);
+	rgb.set(WHITE,SLOW);
+	die_motherfucker = true;
 }
 
 //     __    __    ______   .___  ___.   ______    __
@@ -314,6 +392,7 @@ void strat_homol(){
 	switch (state_homol)
 	{
 	case HO_BEGIN:
+		detection.disableRear();
 		state_homol = HO_RECALAGE_START;
 		nav.startTraj();
 		break;
@@ -327,7 +406,12 @@ void strat_homol(){
 		break;
 	case HO_LIGNE1:
 		detection.disableRear();
-		if (nav.straight(100.0))
+		if (nav.straight(60.0))
+			state_homol = HO_SNEAK_WALL;
+		break;
+	case HO_SNEAK_WALL:
+		detection.disableRear();
+		if (nav.go_s(1400,750))
 			state_homol = HO_ACCOSTAGE_START_CABIN;
 		break;
 	case HO_ACCOSTAGE_START_CABIN:

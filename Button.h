@@ -13,6 +13,7 @@ class Button
     bool newState();
     bool getPreviousState(){return m_previousState;};
     bool getCurrentState(){return m_currentState;};
+    bool getRawState();
 
   private:
     int m_pin;

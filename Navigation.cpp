@@ -12,7 +12,7 @@ Navigation::Navigation(AccelStepper* sG, AccelStepper* sD)
 	m_inProgress = 0;
 	stepperG = sG;
 	stepperD = sD;
-	m_color = PRP;
+	m_color = GRN;
 }
 
 /**
@@ -190,12 +190,6 @@ Navigation::motorRun()
 }
 
 void
-Navigation::run()
-{
-}
-
-
-void
 Navigation::compute_odom(float dxG,float dxD)
 {
 	float ds = (dxG + dxD)/2;
@@ -232,7 +226,7 @@ Navigation::startTraj()
 
 float
 Navigation::symX(float x){
-	if (m_color == GRN)
+	if (m_color == PRP)
 		return -x;
 	else
 		return x;
@@ -240,7 +234,7 @@ Navigation::symX(float x){
 
 float
 Navigation::symT(float t){
-	if (m_color == GRN)
+	if (m_color == PRP)
 		return -t + M_PI;
 	else
 		return t;

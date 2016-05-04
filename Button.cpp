@@ -34,4 +34,8 @@ Button::newState()
   return ret;
 }
 
+bool
+Button::getRawState(){
+	return digitalRead(m_pin);
+}
 
