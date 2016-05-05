@@ -14,6 +14,9 @@ Detection::Detection(int AVG, int AVD, int ARG, int ARD) {
 	m_activeFront = true;
 	m_activeRear = true;
 
+	m_activeLeft = true;
+	m_activeRight = true;
+
 	m_dateDetectionFront = 0;
 	m_dateDetectionRear = 0;
 }
@@ -22,7 +25,7 @@ void
 Detection::run()
 {
 #if ENABLE_DETECTION
-	m_obstacleFront = (digitalRead(m_AVG) || digitalRead(m_AVD));
+	m_obstacleFront = ((digitalRead(m_AVG) && m_activeLeft) || (digitalRead(m_AVD) && m_activeRight));
 	m_obstacleRear  = (digitalRead(m_ARG) || digitalRead(m_ARD));
 #else
 	m_obstacleFront = false;

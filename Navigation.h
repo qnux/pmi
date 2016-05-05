@@ -48,6 +48,7 @@ class Navigation
     float getX_uncolored() {return symX(m_x);}
     float getY(){return m_y;}
     float getT(){return m_t;}
+    void setSpeed(long speed);
 
   private:
     float m_x;

@@ -14,8 +14,6 @@ void
 Claws::run()
 {
 	// transition
-	Serial.println(m_currentState);
-
 	switch (m_currentState)
 	{
 	case C_UNDEFINED:

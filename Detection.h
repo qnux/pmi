@@ -21,6 +21,8 @@ public:
 	void disableAll() { m_activeFront = false; m_activeRear = false; }
 	void disableFront() { m_activeFront = false; }
 	void disableRear() { m_activeRear = false; }
+	void disableLeft() { m_activeLeft = false; }
+	void disableRight() { m_activeRight = false; }
 	void activateAll() { m_activeFront = true; m_activeRear = true; }
 
 private:
@@ -35,6 +37,8 @@ private:
 
 	bool m_activeFront;
 	bool m_activeRear;
+	bool m_activeLeft;
+	bool m_activeRight;
 
 	unsigned long m_dateDetectionFront;
 	unsigned long m_dateDetectionRear;

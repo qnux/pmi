@@ -135,10 +135,10 @@ Navigation::setOdom(float x, float y, float t){
 int
 Navigation::straight(float mm)
 {
-	stepperG->setMaxSpeed(V_MAX);
-	stepperD->setMaxSpeed(V_MAX);
-	stepperG->setAcceleration(ACC_MAX);
-	stepperD->setAcceleration(ACC_MAX);
+//	stepperG->setMaxSpeed(V_MAX);
+//	stepperD->setMaxSpeed(V_MAX);
+//	stepperG->setAcceleration(ACC_MAX);
+//	stepperD->setAcceleration(ACC_MAX);
 	stepperG->moveTo(-mm * GAIN_STEP_MM);
 	stepperD->moveTo(mm * GAIN_STEP_MM);
 
@@ -153,6 +153,7 @@ Navigation::straight(float mm)
 		// Update odom
 		m_x += mm * cos(m_t);
 		m_y += mm * sin(m_t);
+		startTraj();
 		return true;
 	}
 	else
@@ -162,10 +163,10 @@ Navigation::straight(float mm)
 int
 Navigation::turn(float angle)
 {
-	stepperG->setMaxSpeed(V_MAX);
-	stepperD->setMaxSpeed(V_MAX);
-	stepperG->setAcceleration(ACC_MAX);
-	stepperD->setAcceleration(ACC_MAX);
+	stepperG->setMaxSpeed(SPEED_VIR);
+	stepperD->setMaxSpeed(SPEED_VIR);
+//	stepperG->setAcceleration(ACC_MAX);
+//	stepperD->setAcceleration(ACC_MAX);
 	stepperG->moveTo(angle * VOIE/2 * GAIN_STEP_MM);
 	stepperD->moveTo(angle * VOIE/2 * GAIN_STEP_MM);
 
@@ -174,6 +175,7 @@ Navigation::turn(float angle)
 		// Update odom
 		m_t += angle;
 		m_t = moduloPiPi(m_t);
+		startTraj();
 		return true;
 	}
 	else
@@ -222,6 +224,7 @@ Navigation::startTraj()
 {
 	stepperG->setCurrentPosition(0);
 	stepperD->setCurrentPosition(0);
+	setSpeed(0);
 }
 
 float
@@ -249,4 +252,18 @@ Navigation::moduloPiPi(float a){
 		return a - 2*M_PI;
 	else
 		return a;
+}
+
+void
+Navigation::setSpeed(long s){
+	if (s > 0)
+	{
+		stepperG->setMaxSpeed(s);
+		stepperD->setMaxSpeed(s);
+	}
+	else
+	{
+		stepperG->setMaxSpeed(V_MAX);
+		stepperD->setMaxSpeed(V_MAX);
+	}
 }
