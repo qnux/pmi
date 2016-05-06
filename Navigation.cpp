@@ -13,6 +13,7 @@ Navigation::Navigation(AccelStepper* sG, AccelStepper* sD)
 	stepperG = sG;
 	stepperD = sD;
 	m_color = GRN;
+	m_speed_virage = SPEED_VIR;
 }
 
 /**
@@ -163,8 +164,8 @@ Navigation::straight(float mm)
 int
 Navigation::turn(float angle)
 {
-	stepperG->setMaxSpeed(SPEED_VIR);
-	stepperD->setMaxSpeed(SPEED_VIR);
+	stepperG->setMaxSpeed(m_speed_virage);
+	stepperD->setMaxSpeed(m_speed_virage);
 //	stepperG->setAcceleration(ACC_MAX);
 //	stepperD->setAcceleration(ACC_MAX);
 	stepperG->moveTo(angle * VOIE/2 * GAIN_STEP_MM);

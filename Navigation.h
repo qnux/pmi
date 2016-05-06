@@ -49,6 +49,7 @@ class Navigation
     float getY(){return m_y;}
     float getT(){return m_t;}
     void setSpeed(long speed);
+    void setSpeedVir(float s){m_speed_virage = s;}
 
   private:
     float m_x;
@@ -59,6 +60,8 @@ class Navigation
     AccelStepper* stepperD;
     sens_t m_sens;
     color_t m_color;
+
+    float m_speed_virage;
 
 };
 

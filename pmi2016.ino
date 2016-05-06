@@ -561,8 +561,11 @@ strat_fish(){
 	switch (state_fish)
 	{
 	case ST_1:
+		nav.setSpeedVir(1000);
 		if (nav.go_s(1100,-800))
+		{
 			state_fish = ST_2;
+		}
 		break;
 	case ST_2:
 		detection.disableRear();
@@ -611,7 +614,7 @@ strat_fish(){
 		else
 		{
 			nav.setSpeed(SPEED_FISHING/2.0);
-			if (nav.go_s(700,-1000+DISTANCE_TO_WALL_WHILE_FISHING))
+			if (nav.go_s(710,-1000+DISTANCE_TO_WALL_WHILE_FISHING))
 			{
 				state_fish = ST_7_1;
 				nav.setSpeed(0);
@@ -651,9 +654,9 @@ strat_fish(){
 		break;
 	case ST_11:
 		for (int i=0; i < RETRY_DROP; i++){
-			rod.drop();
-			delay(500);
 			rod.positionDrop();
+			delay(700);
+			rod.drop();
 			delay(500);
 		}
 		state_fish = ST_12;
@@ -661,14 +664,46 @@ strat_fish(){
 	case ST_12:
 		rod.rest();
 		inhib_fishing_color();
+		nav.setSpeedVir(1000);
 		if (nav.go_s(390,-800))
+		{
+			nav.setSpeedVir(SPEED_VIR);
 			state_fish = ST_13;
+		}
 		break;
 	case ST_13:
-		state_fish = ST_1;
-		nb_fishing_pass++;
-		ret = true;
+		if (nb_fishing_pass == 2)
+		{
+			state_fish = ST_14;
+		}
+		else
+		{
+			nav.setSpeedVir(SPEED_VIR);
+			state_fish = ST_1;
+			nb_fishing_pass++;
+			ret = true;
+		}
 		break;
+	case ST_14:
+		detection.disableRear();
+		nav.setSpeed(SPEED_RECAL);
+		if (nav.go_s(390,-1150,MARCHE_AR))
+		{
+			nav.setOdom(nav.getX_uncolored(), -1000+X_AR, M_PI/2.0);
+			state_fish = ST_15;
+		}
+		break;
+	case ST_15:
+		detection.disableRear();
+		if (nav.straight(100))
+		{
+			nav.setSpeedVir(SPEED_VIR);
+			state_fish = ST_1;
+			nb_fishing_pass++;
+			ret = true;
+		}
+		break;
+
 	default:;
 	}
 
@@ -704,7 +739,7 @@ strat_startup(){
 		break;
 	case 2:
 		detection.disableRear();
-		if (nav.straight(60.0))
+		if (nav.straight(250.0))
 			state = 3;
 		break;
 	case 3:
@@ -723,7 +758,7 @@ strat_startup(){
 //|___/_||_|___|____|____|
 //
 
-bool strat_start_shell(){
+bool strat_start_shell(bool recal_beginning){
 
 	// By default, enable avoidance
 	// Is is disable after in the states
@@ -733,13 +768,36 @@ bool strat_start_shell(){
 	switch (state_shell){
 	case ST_1:
 		detection.disableRear();
-		if (nav.straight(150))
-			state_shell = ST_1_1;
+		if (nav.go_s(1050,-430))
+			if (recal_beginning)
+				state_shell = ST_1_1;
+			else
+				state_shell = ST_2;
 		break;
 	case ST_1_1:
+		claws.close();
+		detection.disableRear();
+		if (nav.go_s(1300,-430,MARCHE_AR))
+		{
+			state_shell = ST_2_1;
+		}
+		break;
+	case ST_2_1:
+		claws.close();
+		detection.disableRear();
+		nav.setSpeed(SPEED_RECAL);
+		if (nav.go_s(1600,-430,MARCHE_AR))
+		{
+			nav.setOdom(1500-X_AR, nav.getY(), -M_PI);
+			state_shell = ST_3_1;
+		}
+		break;
+	case ST_3_1:
 		detection.disableRear();
 		if (nav.go_s(1050,-430))
+		{
 			state_shell = ST_2;
+		}
 		break;
 	case ST_2:
 		detection.disableFront();
@@ -823,15 +881,15 @@ void strat_master(){
 	{
 	case ST_1:
 		if (strat_startup())
-			state_master = ST_2;
+			state_master = ST_4;
 		break;
 	case ST_1_1:
 		if (strat_castle())
 			state_master = ST_4;
 		break;
 	case ST_2:
-		if (strat_start_shell())
-			state_master = ST_4;
+		if (strat_start_shell(true))
+			state_master = ST_7;
 		break;
 	case ST_3:
 		if (strat_cabin())
@@ -847,7 +905,7 @@ void strat_master(){
 		break;
 	case ST_6:
 		if (strat_fish())
-			state_master = ST_7;
+			state_master = ST_2;
 		break;
 	case ST_7:
 		// do nothing
