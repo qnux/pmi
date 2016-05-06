@@ -121,11 +121,13 @@ state_t state_fish = ST_1;
 state_t state_shell = ST_1;
 state_t state_master = ST_1;
 state_t state_cabin = ST_1;
+state_t state_castle = ST_1;
 
 int started = 0;
 int ended = 0;
 int die_motherfucker = 0;
 unsigned long dateStart = 0;
+int nb_fishing_pass = 0;
 
 void setup() {
 	//	Timer6.attachInterrupt(motors).start(200);
@@ -412,6 +414,50 @@ void inhib_fishing_color(){
 		detection.disableRight();
 }
 
+bool strat_castle(){
+	bool ret = false;
+	digitalWrite(PAP_ENABLE, LOW);
+
+	// By default, enable avoidance
+	// Is is disable after in the states
+	detection.activateAll();
+
+	switch (state_castle){
+	case ST_1:
+		detection.disableRear();
+		if (nav.go_s(1050,100))
+			state_castle = ST_2;
+		break;
+	case ST_2:
+		detection.disableAll();
+		claws.open();
+		if (nav.go_s(950,100,MARCHE_AR))
+			state_castle = ST_3;
+		break;
+	case ST_3:
+		detection.disableAll();
+		nav.setSpeed(SPEED_RECAL);
+		if (nav.go_s(200,120,MARCHE_AR))
+			state_castle = ST_4;
+		break;
+		break;
+	case ST_4:
+		detection.disableRear();
+		if (nav.straight(300))
+			state_castle = ST_5;
+		break;
+	case ST_5:
+		claws.close();
+		ret = true;
+		break;
+	default:;
+	}
+
+	return ret;
+
+
+}
+
 bool strat_cabin(){
 	bool ret = false;
 	digitalWrite(PAP_ENABLE, LOW);
@@ -474,13 +520,14 @@ bool strat_cabin(){
 		break;
 	case ST_8:
 		detection.disableRear();
-		if (nav.go_s(900,900))
+		if (nav.go_s(900,800))
 			state_cabin = ST_9;
 		break;
 	case ST_9:
-		detection.disableRear();
-		if (nav.go_s(1400,900))
-			state_cabin = ST_10;
+		ret = true;
+//		detection.disableRear();
+//		if (nav.go_s(1400,900))
+//			state_cabin = ST_10;
 		break;
 	case ST_10:
 		ret = true;
@@ -514,12 +561,12 @@ strat_fish(){
 	switch (state_fish)
 	{
 	case ST_1:
-		if (nav.go_s(1000,-800))
+		if (nav.go_s(1100,-800))
 			state_fish = ST_2;
 		break;
 	case ST_2:
 		detection.disableRear();
-		if (nav.go_s(1000,-900,MARCHE_AR))
+		if (nav.go_s(1100,-900,MARCHE_AR))
 		{
 			state_fish = ST_2_1;
 		}
@@ -527,7 +574,7 @@ strat_fish(){
 	case ST_2_1:
 		detection.disableRear();
 		nav.setSpeed(SPEED_RECAL);
-		if (nav.go_s(1000,-1050,MARCHE_AR))
+		if (nav.go_s(1100,-1150,MARCHE_AR))
 		{
 			nav.setOdom(nav.getX_uncolored(), -1000+X_AR, M_PI/2.0);
 			state_fish = ST_3;
@@ -539,7 +586,7 @@ strat_fish(){
 			state_fish = ST_4;
 		break;
 	case ST_4:
-		if (nav.go_s(990,-1000+DISTANCE_TO_WALL_WHILE_FISHING))
+		if (nav.go_s(1050,-1000+DISTANCE_TO_WALL_WHILE_FISHING))
 			state_fish = ST_5;
 		break;
 	case ST_5:
@@ -551,17 +598,37 @@ strat_fish(){
 	case ST_6:
 		rod.fish();
 		inhib_fishing_color();
-		nav.setSpeed(SPEED_FISHING);
-		if (nav.go_s(800,-1000+DISTANCE_TO_WALL_WHILE_FISHING))
+		if (nb_fishing_pass < 1)
 		{
-			state_fish = ST_7;
-			nav.setSpeed(0);
+			nav.setSpeed(SPEED_FISHING);
+			if (nav.go_s(850,-1000+DISTANCE_TO_WALL_WHILE_FISHING))
+			{
+				state_fish = ST_7_1;
+				nav.setSpeed(0);
+
+			}
 		}
+		else
+		{
+			nav.setSpeed(SPEED_FISHING/2.0);
+			if (nav.go_s(700,-1000+DISTANCE_TO_WALL_WHILE_FISHING))
+			{
+				state_fish = ST_7_1;
+				nav.setSpeed(0);
+
+			}
+		}
+
+		break;
+	case ST_7_1:
+		rod.travelFish();
+		delay(1000);
+		state_fish = ST_7;
 		break;
 	case ST_7:
 		rod.travelFish();
 		inhib_fishing_color();
-		if (nav.go_s(650,-1000+DISTANCE_TO_WALL_WHILE_DROPING))
+		if (nav.go_s(600,-1000+DISTANCE_TO_WALL_WHILE_DROPING))
 			state_fish = ST_8;
 		break;
 	case ST_8:
@@ -592,8 +659,14 @@ strat_fish(){
 		state_fish = ST_12;
 		break;
 	case ST_12:
-		rod.travelFish();
+		rod.rest();
 		inhib_fishing_color();
+		if (nav.go_s(390,-800))
+			state_fish = ST_13;
+		break;
+	case ST_13:
+		state_fish = ST_1;
+		nb_fishing_pass++;
 		ret = true;
 		break;
 	default:;
@@ -650,7 +723,7 @@ strat_startup(){
 //|___/_||_|___|____|____|
 //
 
-bool strat_shell(){
+bool strat_start_shell(){
 
 	// By default, enable avoidance
 	// Is is disable after in the states
@@ -752,20 +825,32 @@ void strat_master(){
 		if (strat_startup())
 			state_master = ST_2;
 		break;
+	case ST_1_1:
+		if (strat_castle())
+			state_master = ST_4;
+		break;
 	case ST_2:
-		if (strat_shell())
-			state_master = ST_3;
+		if (strat_start_shell())
+			state_master = ST_4;
 		break;
 	case ST_3:
 		if (strat_cabin())
-			state_master = ST_5;
+			state_master = ST_4;
 		break;
 	case ST_4:
 		if (strat_fish())
 			state_master = ST_5;
 		break;
 	case ST_5:
-		break; // do nothing
+		if (strat_fish())
+			state_master = ST_6;
+		break;
+	case ST_6:
+		if (strat_fish())
+			state_master = ST_7;
+		break;
+	case ST_7:
+		// do nothing
 	default:;
 	}
 }
