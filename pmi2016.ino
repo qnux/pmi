@@ -768,6 +768,11 @@ bool strat_start_shell(bool recal_beginning){
 	switch (state_shell){
 	case ST_1:
 		detection.disableRear();
+		if (nav.go_s(1150,-700))
+				state_shell = ST_20;
+		break;
+	case ST_20:
+		detection.disableRear();
 		if (nav.go_s(1050,-430))
 			if (recal_beginning)
 				state_shell = ST_1_1;
