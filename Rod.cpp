@@ -31,9 +31,9 @@ Rod::run()
 	case ROD_REST:
 		m_srvRel->write(ROD_RELEASE_REST);
 		if (m_color == GRN)
-			m_srvArm->write(ROD_ARD_REST_GREEN);
+			sweep(ROD_ARD_REST_GREEN);
 		else
-			m_srvArm->write(ROD_ARD_REST_PURPLE);
+			sweep(ROD_ARD_REST_PURPLE);
 		break;
 	case ROD_FISH:
 		m_srvRel->write(ROD_RELEASE_REST);
@@ -45,23 +45,23 @@ Rod::run()
 	case ROD_TRAVEL_WITH_FISH:
 		m_srvRel->write(ROD_RELEASE_REST);
 		if (m_color == GRN)
-			m_srvArm->write(ROD_ARD_TRAVEL_GREEN);
+			sweep(ROD_ARD_TRAVEL_GREEN);
 		else
-			m_srvArm->write(ROD_ARD_TRAVEL_PURPLE);
+			sweep(ROD_ARD_TRAVEL_PURPLE);
 		break;
 	case ROD_POSITION_DROP:
 		m_srvRel->write(ROD_RELEASE_REST);
 		if (m_color == GRN)
-			m_srvArm->write(ROD_ARD_DROP_GREEN);
+			sweep(ROD_ARD_DROP_GREEN);
 		else
-			m_srvArm->write(ROD_ARD_DROP_PURPLE);
+			sweep(ROD_ARD_DROP_PURPLE);
 		break;
 	case ROD_DROP:
 		m_srvRel->write(ROD_RELEASE_DROP);
 		if (m_color == GRN)
-			m_srvArm->write(ROD_ARD_DROP_GREEN);
+			sweep(ROD_ARD_DROP_GREEN);
 		else
-			m_srvArm->write(ROD_ARD_DROP_PURPLE);
+			sweep(ROD_ARD_DROP_PURPLE);
 		break;
 	default:;
 	}
