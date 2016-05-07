@@ -503,66 +503,85 @@ bool strat_cabin(){
 	{
 	case ST_1:
 		detection.disableRear();
-		if (nav.go_s(1200,-200))
+		if (nav.go_s(1300,-600))
 			state_cabin = ST_2;
 		break;
 	case ST_2:
 		detection.disableRear();
-		if (nav.go_s(1200,740))
+		if (nav.go_s(1300,740))
 			state_cabin = ST_3;
 		break;
 	case ST_3:
 		detection.disableRear();
-		if (nav.go_s(1200,750,MARCHE_AR))
+		if (nav.go_s(1310,740,MARCHE_AR))
 			state_cabin = ST_4;
 		break;
 	case ST_4:
+		detection.disableRear();
+		nav.setSpeed(SPEED_RECAL);
+		if (nav.go_s(1600,740,MARCHE_AR))
+		{
+			nav.setOdom(1500-X_AR, nav.getY(), -M_PI);
+			state_cabin = ST_5;
+		}
+		break;
+	case ST_5:
+		detection.disableRear();
+		if (nav.go_s(1200,740))
+			state_cabin = ST_6;
+		break;
+	case ST_6:
+		detection.disableRear();
+		if (nav.go_s(1200,750,MARCHE_AR))
+			state_cabin = ST_7;
+		break;
+	case ST_7:
 		nav.setSpeed(SPEED_RECAL);
 		detection.disableRear();
 		if (nav.go_s(1200,1050,MARCHE_AR))
 		{
 			// recal to cabin door
 			nav.setOdom(nav.getX_uncolored(),1000-10-X_AR,-M_PI/2.0);
-			state_cabin = ST_5;
+			state_cabin = ST_8;
 			nav.startTraj();
 		}
 		break;
-	case ST_5:
+	case ST_8:
 		detection.disableRear();
 		if (nav.straight(200))
-			state_cabin = ST_6;
+			state_cabin = ST_9;
 		break;
-	case ST_6:
+	case ST_9:
 		if (nav.go_s(900,750))
-			state_cabin = ST_6_1;
+			state_cabin = ST_10;
 		break;
-	case ST_6_1:
+	case ST_10:
 		detection.disableRear();
 		if (nav.go_s(900,760,MARCHE_AR))
-			state_cabin = ST_7;
+			state_cabin = ST_11;
 		break;
-	case ST_7:
+	case ST_11:
 		detection.disableRear();
 		nav.setSpeed(SPEED_RECAL);
 		if (nav.go_s(900,1000,MARCHE_AR))
 		{
 			// recal to cabin door
 			nav.setOdom(nav.getX_uncolored(),1000-10-X_AR,-M_PI/2.0);
-			state_cabin = ST_8;
+			state_cabin = ST_12;
 		}
 		break;
-	case ST_8:
+	case ST_12:
 		detection.disableRear();
 		if (nav.go_s(900,800))
-			state_cabin = ST_9;
+			state_cabin = ST_13;
 		break;
-	case ST_9:
+	case ST_13:
 		ret = true;
 //		detection.disableRear();
 //		if (nav.go_s(1400,900))
 //			state_cabin = ST_10;
 		break;
-	case ST_10:
+	case ST_14:
 		ret = true;
 //
 //		detection.disableFront();
@@ -979,9 +998,9 @@ void strat_master(){
 	case ST_6:
 		if (strat_fish())
 			if (btn_strat1.getRawState() == 0)
-				state_master = ST_2;
+				state_master = ST_2; // seashell
 			else
-				state_master = ST_2; // ST_8 // pour éviter les bourdes
+				state_master = ST_3; // CABINE
 		break;
 	case ST_7:
 		// do nothing
