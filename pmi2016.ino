@@ -122,6 +122,7 @@ state_t state_shell = ST_1;
 state_t state_master = ST_1;
 state_t state_cabin = ST_1;
 state_t state_castle = ST_1;
+state_t state_die = ST_1;
 
 int started = 0;
 int ended = 0;
@@ -436,26 +437,58 @@ bool strat_castle(){
 		break;
 	case ST_3:
 		detection.disableAll();
-		nav.setSpeed(SPEED_RECAL);
+		nav.setSpeed(2500);
 		if (nav.go_s(200,120,MARCHE_AR))
 			state_castle = ST_4;
 		break;
-		break;
 	case ST_4:
 		detection.disableRear();
-		if (nav.straight(300))
+		if (nav.straight(100))
 			state_castle = ST_5;
 		break;
 	case ST_5:
 		claws.close();
+		detection.disableRear();
+		if (nav.go_s(500,100))
+			state_castle = ST_6;
+		break;
+	case ST_6:
+		claws.close();
+		detection.disableRear();
+		if (nav.go_s(500,170,MARCHE_AR))
+			state_castle = ST_7;
+		break;
+	case ST_7:
+		detection.disableRear();
+		if (nav.go_s(500,300,MARCHE_AR))
+		{
+			nav.setOdom(nav.getX_uncolored(),228-X_AR,-M_PI/2.0);
+			state_castle = ST_8;
+		}
+		break;
+	case ST_8:
+		detection.disableRear();
+		if (nav.go_s(500, 150))
+		{
+			state_castle = ST_9;
+		}
+		break;
+	case ST_9:
+		detection.disableRear();
+		ret = true;
+//		if (nav.go_s(1000, -100))
+//		{
+//			state_castle = ST_10;
+//		}
+		break;
+	case ST_10:
+		detection.disableRear();
 		ret = true;
 		break;
 	default:;
 	}
 
 	return ret;
-
-
 }
 
 bool strat_cabin(){
@@ -562,14 +595,14 @@ strat_fish(){
 	{
 	case ST_1:
 		nav.setSpeedVir(1000);
-		if (nav.go_s(1100,-800))
+		if (nav.go_s(1050,-800))
 		{
 			state_fish = ST_2;
 		}
 		break;
 	case ST_2:
 		detection.disableRear();
-		if (nav.go_s(1100,-900,MARCHE_AR))
+		if (nav.go_s(1050,-900,MARCHE_AR))
 		{
 			state_fish = ST_2_1;
 		}
@@ -577,7 +610,7 @@ strat_fish(){
 	case ST_2_1:
 		detection.disableRear();
 		nav.setSpeed(SPEED_RECAL);
-		if (nav.go_s(1100,-1150,MARCHE_AR))
+		if (nav.go_s(1050,-1150,MARCHE_AR))
 		{
 			nav.setOdom(nav.getX_uncolored(), -1000+X_AR, M_PI/2.0);
 			state_fish = ST_3;
@@ -665,25 +698,24 @@ strat_fish(){
 		rod.rest();
 		inhib_fishing_color();
 		nav.setSpeedVir(1000);
-		if (nav.go_s(390,-800))
-		{
-			nav.setSpeedVir(SPEED_VIR);
-			state_fish = ST_13;
-		}
-		break;
-	case ST_13:
-		if (nb_fishing_pass == 2)
+		if (nav.go_s(390,-1000+DISTANCE_TO_WALL_WHILE_FISHING+10))
 		{
 			state_fish = ST_14;
 		}
-		else
-		{
-			nav.setSpeedVir(SPEED_VIR);
-			state_fish = ST_1;
-			nb_fishing_pass++;
-			ret = true;
-		}
 		break;
+//	case ST_13:
+//		if (nb_fishing_pass == 2)
+//		{
+//			state_fish = ST_14;
+//		}
+//		else
+//		{
+//			nav.setSpeedVir(SPEED_VIR);
+//			state_fish = ST_1;
+//			nb_fishing_pass++;
+//			ret = true;
+//		}
+//		break;
 	case ST_14:
 		detection.disableRear();
 		nav.setSpeed(SPEED_RECAL);
@@ -695,7 +727,7 @@ strat_fish(){
 		break;
 	case ST_15:
 		detection.disableRear();
-		if (nav.straight(100))
+		if (nav.straight(200-X_AR))
 		{
 			nav.setSpeedVir(SPEED_VIR);
 			state_fish = ST_1;
@@ -768,7 +800,7 @@ bool strat_start_shell(bool recal_beginning){
 	switch (state_shell){
 	case ST_1:
 		detection.disableRear();
-		if (nav.go_s(1150,-700))
+//		if (nav.go_s(1150,-700))
 				state_shell = ST_20;
 		break;
 	case ST_20:
@@ -799,7 +831,7 @@ bool strat_start_shell(bool recal_beginning){
 		break;
 	case ST_3_1:
 		detection.disableRear();
-		if (nav.go_s(1050,-430))
+		if (nav.go_s(1250,-430))
 		{
 			state_shell = ST_2;
 		}
@@ -872,6 +904,42 @@ bool strat_start_shell(bool recal_beginning){
 	return ret;
 }
 
+
+bool strat_die(){
+
+	// By default, enable avoidance
+	// Is is disable after in the states
+	detection.activateAll();
+
+	bool ret = false;
+	switch (state_die){
+	case ST_1:
+		detection.disableRear();
+		if (nav.go_s(0,-550))
+			state_die = ST_2;
+		break;
+	case ST_2:
+		detection.disableFront();
+		if (nav.go_s(0,-550,MARCHE_AR))
+			state_die = ST_3;
+		break;
+	case ST_3:
+		detection.disableRear();
+		if (detection.getDetectionFront())
+		{
+			delay(1000);
+			state_die = ST_2;
+		}
+		if (nav.go_s(-750,-100))
+			state_die = ST_1;
+		break;
+
+	default:;
+	}
+
+	return ret;
+}
+
 //
 // __  __   _   ___ _____ ___ ___
 //|  \/  | /_\ / __|_   _| __| _ \
@@ -886,7 +954,7 @@ void strat_master(){
 	{
 	case ST_1:
 		if (strat_startup())
-			state_master = ST_4;
+			state_master = ST_1_1;
 		break;
 	case ST_1_1:
 		if (strat_castle())
@@ -910,10 +978,17 @@ void strat_master(){
 		break;
 	case ST_6:
 		if (strat_fish())
-			state_master = ST_2;
+			if (btn_strat1.getRawState() == 0)
+				state_master = ST_2;
+			else
+				state_master = ST_2; // ST_8 // pour éviter les bourdes
 		break;
 	case ST_7:
 		// do nothing
+	case ST_8:
+		if (strat_die())
+			state_master = ST_7;
+		break;
 	default:;
 	}
 }

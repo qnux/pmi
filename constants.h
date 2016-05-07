@@ -12,9 +12,9 @@
 //#define GAIN_STEP_DEG 2000.0/218.0*1.75
 
 
-#define V_MAX 5000 //80000
+#define V_MAX 6000 //80000
 #define ACC_MAX 15000.0
-#define SPEED_RECAL 1500.0
+#define SPEED_RECAL 1800.0
 #define SPEED_VIR 2000.0
 
 #define DURATION_MATCH_MS 90000
