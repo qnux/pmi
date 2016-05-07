@@ -589,7 +589,7 @@ strat_fish(){
 			state_fish = ST_4;
 		break;
 	case ST_4:
-		if (nav.go_s(1050,-1000+DISTANCE_TO_WALL_WHILE_FISHING))
+		if (nav.go_s(1000,-1000+DISTANCE_TO_WALL_WHILE_FISHING))
 			state_fish = ST_5;
 		break;
 	case ST_5:
@@ -655,7 +655,7 @@ strat_fish(){
 	case ST_11:
 		for (int i=0; i < RETRY_DROP; i++){
 			rod.positionDrop();
-			delay(700);
+			delay(1200);
 			rod.drop();
 			delay(500);
 		}
